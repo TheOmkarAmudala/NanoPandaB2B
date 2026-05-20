@@ -1,5 +1,5 @@
 import Invitation from "../models/invitation.js";
-import User from "../models/user.js";
+import User from "../models/User.js";
 
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
