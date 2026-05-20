@@ -1,0 +1,17 @@
+import mongoose from "mongoose";
+
+const workspaceSchema = new mongoose.Schema({
+   name: String,
+
+   admins: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+   }],
+
+   createdAt: {
+      type: Date,
+      default: Date.now
+   }
+});
+
+export default mongoose.model("Workspace", workspaceSchema);
