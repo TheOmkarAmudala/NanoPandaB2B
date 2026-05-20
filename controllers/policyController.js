@@ -1,4 +1,4 @@
-import Policy from "../models/Policy.js";
+import Policy from "../models/policy.js";
 import User from "../models/User.js";
 
 export const createPolicy = async (req, res) => {
