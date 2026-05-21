@@ -12,7 +12,7 @@ import {
 
    deleteWorkspace
 
-} from "../controllers/workspace.controller.js";
+} from "../controllers/workspace.js";
 
 const router = express.Router();
 
