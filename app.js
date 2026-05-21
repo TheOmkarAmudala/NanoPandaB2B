@@ -6,9 +6,12 @@ import invitationRoutes from "./routes/invitationRoutes.js";
 import biometricRoutes from "./routes/biometricRoutes.js";
 import policyRoutes from "./routes/policyRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import workspaceRoutes from "./routes/workspace.routes.js";
+
 dotenv.config();
 
 const app = express();
+
 
 app.use(cors());
 app.use(express.json());
@@ -25,7 +28,10 @@ app.use("/api/users", userRoutes);
 app.use("/api/policies", policyRoutes);
 app.use("/api/invitations", invitationRoutes);
 app.use("/api/biometric", biometricRoutes);
-
+app.use(
+   "/api/workspaces",
+   workspaceRoutes
+);
 
 
 const PORT = process.env.PORT || 5000;

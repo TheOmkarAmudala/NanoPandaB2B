@@ -5,8 +5,6 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-
-// SEND INVITATION
 export const sendInvitation = async (req, res) => {
 
    try {
@@ -19,31 +17,75 @@ export const sendInvitation = async (req, res) => {
          invitedBy
       } = req.body;
 
-      // Generate secure token
+      // CHECK USER EXISTS
+      const existingUser = await User.findOne({
+         email
+      });
+
+      if (!existingUser) {
+
+         return res.status(404).json({
+
+            success: false,
+            message: "Employee account not found"
+
+         });
+
+      }
+
+      // CHECK IF INVITATION ALREADY EXISTS
+      const alreadyInvited = await Invitation.findOne({
+         email,
+         workspaceId,
+         status: "PENDING"
+      });
+
+      if (alreadyInvited) {
+
+         return res.status(400).json({
+
+            success: false,
+            message: "Invitation already pending"
+
+         });
+
+      }
+
+      // GENERATE TOKEN
       const token = crypto.randomUUID();
 
-      // Expiry: 3 days
+      // EXPIRY: 3 DAYS
       const expiresAt = new Date(
          Date.now() + 3 * 24 * 60 * 60 * 1000
       );
 
-      // Save invitation
+      // CREATE INVITATION
       const invitation = await Invitation.create({
 
          workspaceId,
+
          email,
+
          invitedBy,
+
          consentText,
+
          requestedPermissions,
+
          token,
-         expiresAt
+
+         expiresAt,
+
+         status: "PENDING"
 
       });
 
       return res.status(201).json({
 
          success: true,
+
          message: "Invitation sent successfully",
+
          invitation
 
       });
@@ -53,6 +95,7 @@ export const sendInvitation = async (req, res) => {
       return res.status(500).json({
 
          success: false,
+
          message: error.message
 
       });
@@ -60,7 +103,6 @@ export const sendInvitation = async (req, res) => {
    }
 
 };
-
 
 // ACCEPT INVITATION + CREATE ACCOUNT
 export const acceptInvitation = async (req, res) => {
