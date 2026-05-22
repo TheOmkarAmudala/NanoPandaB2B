@@ -5,6 +5,11 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+import crypto from "crypto";
+import Invitation from "../models/Invitation.js";
+import User from "../models/User.js";
+import Workspace from "../models/Workspace.js";
+
 export const sendInvitation = async (req, res) => {
 
    try {
@@ -13,13 +18,80 @@ export const sendInvitation = async (req, res) => {
          workspaceId,
          email,
          consentText,
-         requestedPermissions,
-         invitedBy
+         requestedPermissions
       } = req.body;
 
-      // CHECK USER EXISTS
+      // GET INVITER FROM JWT
+      const invitedBy = req.user.id;
+
+      // VALIDATION
+      if (
+         !workspaceId ||
+         !email ||
+         !consentText
+      ) {
+
+         return res.status(400).json({
+
+            success: false,
+            message: "Missing required fields"
+
+         });
+
+      }
+
+      // CHECK INVITER EXISTS
+      const inviter = await User.findById(invitedBy);
+
+      if (!inviter) {
+
+         return res.status(404).json({
+
+            success: false,
+            message: "Inviter not found"
+
+         });
+
+      }
+
+      // CHECK WORKSPACE EXISTS
+      const workspace = await Workspace.findById(workspaceId);
+
+      if (!workspace) {
+
+         return res.status(404).json({
+
+            success: false,
+            message: "Workspace not found"
+
+         });
+
+      }
+
+      // CHECK INVITER BELONGS TO WORKSPACE
+      const isWorkspaceAdmin = workspace.admins.some(
+
+         (adminId) =>
+            adminId.toString() === invitedBy
+
+      );
+
+      if (!isWorkspaceAdmin) {
+
+         return res.status(403).json({
+
+            success: false,
+            message: "Unauthorized to invite users"
+
+         });
+
+      }
+
+      // CHECK EMPLOYEE EXISTS
       const existingUser = await User.findOne({
-         email
+
+         email: email.toLowerCase().trim()
+
       });
 
       if (!existingUser) {
@@ -33,16 +105,20 @@ export const sendInvitation = async (req, res) => {
 
       }
 
-      // CHECK IF INVITATION ALREADY EXISTS
+      // CHECK EXISTING PENDING INVITATION
       const alreadyInvited = await Invitation.findOne({
-         email,
+
+         email: email.toLowerCase().trim(),
+
          workspaceId,
+
          status: "PENDING"
+
       });
 
       if (alreadyInvited) {
 
-         return res.status(400).json({
+         return res.status(409).json({
 
             success: false,
             message: "Invitation already pending"
@@ -51,12 +127,14 @@ export const sendInvitation = async (req, res) => {
 
       }
 
-      // GENERATE TOKEN
+      // GENERATE SECURE TOKEN
       const token = crypto.randomUUID();
 
-      // EXPIRY: 3 DAYS
+      // SET EXPIRY (3 DAYS)
       const expiresAt = new Date(
+
          Date.now() + 3 * 24 * 60 * 60 * 1000
+
       );
 
       // CREATE INVITATION
@@ -64,11 +142,11 @@ export const sendInvitation = async (req, res) => {
 
          workspaceId,
 
-         email,
+         email: email.toLowerCase().trim(),
 
          invitedBy,
 
-         consentText,
+         consentText: consentText.trim(),
 
          requestedPermissions,
 
@@ -92,11 +170,13 @@ export const sendInvitation = async (req, res) => {
 
    } catch (error) {
 
+      console.error("SEND INVITATION ERROR:", error);
+
       return res.status(500).json({
 
          success: false,
 
-         message: error.message
+         message: "Internal server error"
 
       });
 
