@@ -9,13 +9,13 @@ export const createWorkspace = async (req, res) => {
 
    try {
 
-      const { name } = req.body;
+      // GET DATA
+      let { name } = req.body;
 
-      // GET ADMIN ID FROM TOKEN
       const adminId = req.user.id;
 
       // VALIDATION
-      if (!name) {
+      if (!name || !name.trim()) {
 
          return res.status(400).json({
 
@@ -26,6 +26,9 @@ export const createWorkspace = async (req, res) => {
 
       }
 
+      // NORMALIZE NAME
+      name = name.trim();
+
       // CHECK ADMIN EXISTS
       const adminUser = await User.findById(adminId);
 
@@ -35,6 +38,38 @@ export const createWorkspace = async (req, res) => {
 
             success: false,
             message: "Admin user not found"
+
+         });
+
+      }
+
+      // PREVENT MULTIPLE WORKSPACES FOR SAME ADMIN
+      if (adminUser.workspaceId) {
+
+         return res.status(409).json({
+
+            success: false,
+            message: "User already owns a workspace"
+
+         });
+
+      }
+
+      // CHECK DUPLICATE WORKSPACE NAME
+      const existingWorkspace = await Workspace.findOne({
+
+         name: {
+            $regex: new RegExp(`^${name}$`, "i")
+         }
+
+      });
+
+      if (existingWorkspace) {
+
+         return res.status(409).json({
+
+            success: false,
+            message: "Workspace name already exists"
 
          });
 
@@ -68,11 +103,13 @@ export const createWorkspace = async (req, res) => {
 
    } catch (error) {
 
+      console.error("CREATE WORKSPACE ERROR:", error);
+
       return res.status(500).json({
 
          success: false,
 
-         message: error.message
+         message: "Internal server error"
 
       });
 
