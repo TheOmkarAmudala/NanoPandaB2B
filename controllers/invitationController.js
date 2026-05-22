@@ -185,122 +185,259 @@ export const acceptInvitation = async (req, res) => {
 
    try {
 
-      const { token } = req.params;
+      const { invitationId } = req.params;
 
-      const {
-         name,
-         password
-      } = req.body;
+      const userId = req.user.id;
 
-      // Find invitation
-      const invitation = await Invitation.findOne({
-         token
-      });
+      // GET USER
+      const user = await User.findById(userId);
 
-      // Invalid invitation
+      if (!user) {
+
+         return res.status(404).json({
+
+            success: false,
+            message: "User not found"
+
+         });
+
+      }
+
+      // FIND INVITATION
+      const invitation = await Invitation.findById(
+         invitationId
+      );
+
       if (!invitation) {
 
          return res.status(404).json({
+
             success: false,
-            message: "Invalid invitation"
+            message: "Invitation not found"
+
          });
 
       }
 
-      // Expiry check
+      // SECURITY CHECK
+      if (invitation.email !== user.email) {
+
+         return res.status(403).json({
+
+            success: false,
+            message: "Unauthorized invitation access"
+
+         });
+
+      }
+
+      // STATUS CHECK
+      if (invitation.status !== "PENDING") {
+
+         return res.status(400).json({
+
+            success: false,
+            message: "Invitation already processed"
+
+         });
+
+      }
+
+      // EXPIRY CHECK
       if (new Date() > invitation.expiresAt) {
 
+         invitation.status = "EXPIRED";
+
+         await invitation.save();
+
          return res.status(400).json({
+
             success: false,
             message: "Invitation expired"
+
          });
 
       }
 
-      // Already accepted
-      if (invitation.status === "ACCEPTED") {
+      // UPDATE USER
+      user.workspaceId = invitation.workspaceId;
 
-         return res.status(400).json({
-            success: false,
-            message: "Invitation already accepted"
-         });
+      user.role = "EMPLOYEE";
 
-      }
+      user.consentAccepted = true;
 
-      // Check if user already exists
-      const existingUser = await User.findOne({
-         email: invitation.email
-      });
+      await user.save();
 
-      if (existingUser) {
-
-         return res.status(400).json({
-            success: false,
-            message: "User already exists"
-         });
-
-      }
-
-      // Hash password
-      const hashedPassword =
-         await bcrypt.hash(password, 10);
-
-      // Create user
-      const user = await User.create({
-
-         name,
-
-         email: invitation.email,
-
-         password: hashedPassword,
-
-         workspaceId: invitation.workspaceId,
-
-         role: "EMPLOYEE",
-
-         consentAccepted: true
-
-      });
-
-      // Update invitation
+      // UPDATE INVITATION
       invitation.status = "ACCEPTED";
 
       await invitation.save();
-
-      // Generate JWT
-      const tokenJwt = jwt.sign(
-
-         {
-            id: user._id,
-            workspaceId: user.workspaceId
-         },
-
-         process.env.JWT_SECRET,
-
-         {
-            expiresIn: "7d"
-         }
-
-      );
 
       return res.status(200).json({
 
          success: true,
 
-         message: "Account created successfully",
-
-         token: tokenJwt,
-
-         user
+         message: "Invitation accepted successfully"
 
       });
 
    } catch (error) {
 
+      console.error(error);
+
       return res.status(500).json({
 
          success: false,
-         message: error.message
+         message: "Internal server error"
+
+      });
+
+   }
+
+};
+
+export const rejectInvitation = async (req, res) => {
+
+   try {
+
+      const { invitationId } = req.params;
+
+      const userId = req.user.id;
+
+      // GET USER
+      const user = await User.findById(userId);
+
+      if (!user) {
+
+         return res.status(404).json({
+
+            success: false,
+            message: "User not found"
+
+         });
+
+      }
+
+      // FIND INVITATION
+      const invitation = await Invitation.findById(
+         invitationId
+      );
+
+      if (!invitation) {
+
+         return res.status(404).json({
+
+            success: false,
+            message: "Invitation not found"
+
+         });
+
+      }
+
+      // SECURITY CHECK
+      if (invitation.email !== user.email) {
+
+         return res.status(403).json({
+
+            success: false,
+            message: "Unauthorized invitation access"
+
+         });
+
+      }
+
+      // CHECK STATUS
+      if (invitation.status !== "PENDING") {
+
+         return res.status(400).json({
+
+            success: false,
+            message: "Invitation already processed"
+
+         });
+
+      }
+
+      // REJECT
+      invitation.status = "REJECTED";
+
+      await invitation.save();
+
+      return res.status(200).json({
+
+         success: true,
+
+         message: "Invitation rejected"
+
+      });
+
+   } catch (error) {
+
+      console.error(error);
+
+      return res.status(500).json({
+
+         success: false,
+         message: "Internal server error"
+
+      });
+
+   }
+
+};
+
+export const fetchMyInvitations = async (req, res) => {
+
+   try {
+
+      const userId = req.user.id;
+
+      // GET USER
+      const user = await User.findById(userId);
+
+      if (!user) {
+
+         return res.status(404).json({
+
+            success: false,
+            message: "User not found"
+
+         });
+
+      }
+
+      // FETCH PENDING INVITATIONS
+      const invitations = await Invitation.find({
+
+         email: user.email,
+
+         status: "PENDING",
+
+         expiresAt: { $gt: new Date() }
+
+      })
+
+      .populate("workspaceId", "name")
+      .populate("invitedBy", "name email");
+
+      return res.status(200).json({
+
+         success: true,
+
+         count: invitations.length,
+
+         invitations
+
+      });
+
+   } catch (error) {
+
+      console.error(error);
+
+      return res.status(500).json({
+
+         success: false,
+         message: "Internal server error"
 
       });
 
