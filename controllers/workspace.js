@@ -9,18 +9,18 @@ export const createWorkspace = async (req, res) => {
 
    try {
 
-      const {
-         name,
-         adminId
-      } = req.body;
+      const { name } = req.body;
+
+      // GET ADMIN ID FROM TOKEN
+      const adminId = req.user.id;
 
       // VALIDATION
-      if (!name || !adminId) {
+      if (!name) {
 
          return res.status(400).json({
 
             success: false,
-            message: "Workspace name and adminId are required"
+            message: "Workspace name is required"
 
          });
 
@@ -81,15 +81,14 @@ export const createWorkspace = async (req, res) => {
 };
 
 // ==============================
-// FETCH ALL USER WORKSPACES
+// FETCH USER WORKSPACES
 // ==============================
 export const fetchUserWorkspaces = async (req, res) => {
 
    try {
 
-      const {
-         userId
-      } = req.params;
+      // GET USER ID FROM TOKEN
+      const userId = req.user.id;
 
       // FIND USER
       const user = await User.findById(userId);
