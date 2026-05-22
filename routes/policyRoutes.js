@@ -5,11 +5,11 @@ import {
    assignPolicy,
    getMyPolicy
 } from "../controllers/policyController.js";
-
+import authMiddleware from "../middleware/authMiddleware.js";
 const router = express.Router();
 
-router.post("/create", createPolicy);
-router.post("/assign", assignPolicy);
-router.get("/me/:userId", getMyPolicy);
+router.post("/create",authMiddleware, createPolicy);
+router.post("/assign", authMiddleware, assignPolicy);
+router.get("/me/:userId", authMiddleware, getMyPolicy);
 
 export default router;
