@@ -4,10 +4,6 @@ import User from "../models/User.js";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-
-import crypto from "crypto";
-import Invitation from "../models/invitation.js";
-import User from "../models/User.js";
 import Workspace from "../models/workspace.js";
 
 export const sendInvitation = async (req, res) => {
