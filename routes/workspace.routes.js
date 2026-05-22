@@ -25,7 +25,7 @@ router.post(
 
 // FETCH USER WORKSPACES
 router.get(
-   "/user/:userId",
+   "/user",
    authMiddleware,
    fetchUserWorkspaces
 );
