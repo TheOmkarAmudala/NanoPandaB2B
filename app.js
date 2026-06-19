@@ -7,7 +7,7 @@ import biometricRoutes from "./routes/biometricRoutes.js";
 import policyRoutes from "./routes/policyRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import workspaceRoutes from "./routes/workspace.routes.js";
-
+import alertRoutes from "./routes/alertRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -25,6 +25,7 @@ mongoose.connect(process.env.MONGO_URI)
 .catch(err => console.log(err));
 
 app.use("/api/users", userRoutes);
+app.use("/api/alerts", alertRoutes);
 app.use("/api/policies", policyRoutes);
 app.use("/api/invitations", invitationRoutes);
 app.use("/api/biometric", biometricRoutes);
