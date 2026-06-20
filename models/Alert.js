@@ -1,36 +1,32 @@
-// models/Alert.js
-
 import mongoose from "mongoose";
 
-const AlertSchema = new mongoose.Schema({
-    deviceId: {
-        type: String,
-        required: true
+const alertSchema = new mongoose.Schema({
+
+    employeeId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
     },
 
-    username: {
-        type: String,
-        required: true
+    workspaceId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Workspace"
     },
 
-    eventType: {
-        type: String,
-        required: true
-    },
+    deviceId: String,
 
-    severity: {
-        type: String,
-        default: "LOW"
-    },
+    username: String,
 
-    details: {
-        type: String
-    },
+    eventType: String,
 
-    timestamp: {
-        type: Date,
-        default: Date.now
-    }
+    severity: String,
+
+    details: String
+
+}, {
+    timestamps: true
 });
 
-export default mongoose.model("Alert", AlertSchema);
+export default mongoose.model(
+    "Alert",
+    alertSchema
+);

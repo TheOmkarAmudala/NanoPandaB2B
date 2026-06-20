@@ -1,0 +1,53 @@
+import User from "../models/User.js";
+
+export const getMyEmployees =
+async (req, res) => {
+
+    try {
+
+        const admin =
+            await User.findById(
+                req.user.id
+            );
+
+        const employees =
+            await User.find({
+
+                workspaceId:
+                    admin.workspaceId,
+
+                role:
+                    "EMPLOYEE"
+
+            })
+
+            .select(
+                "-password"
+            );
+
+        return res.status(200).json({
+
+            success: true,
+
+            count:
+                employees.length,
+
+            data:
+                employees
+
+        });
+
+    } catch (error) {
+
+        return res.status(500).json({
+
+            success: false,
+
+            message:
+                error.message
+
+        });
+
+    }
+
+};
