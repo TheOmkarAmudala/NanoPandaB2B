@@ -1,7 +1,7 @@
 // controllers/alertController.js
 
 import Alert from "../models/Alert.js";
-
+import User from "../models/User.js";
 export const createAlert = async (req, res) => {
 
     try {
@@ -92,6 +92,55 @@ export const getAlerts = async (req, res) => {
         });
 
     }
+};
+
+export const getEmployeeAlerts =
+async (req, res) => {
+
+    try {
+
+        const { employeeId } =
+            req.params;
+
+        const alerts =
+            await Alert.find({
+
+                employeeId,
+
+                workspaceId:
+                    req.user.workspaceId
+
+            })
+
+            .sort({
+                createdAt: -1
+            });
+
+        return res.status(200).json({
+
+            success: true,
+
+            count:
+                alerts.length,
+
+            data:
+                alerts
+
+        });
+
+    } catch (error) {
+
+        return res.status(500).json({
+
+            success: false,
+
+            message:
+                error.message
+
+        });
+
+    }
+
 };
 
 // controllers/alertController.js
